@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FleetCare - Sistema de Controle de Manutenção de Frotas</title>
+    <!-- CSS Externo -->
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-truck-fast logo-icon"></i>
+                <h2>FleetCare</h2>
+                <button id="toggleSidebar" class="toggle-btn"><i class="fa-solid fa-bars"></i></button>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active" data-tab="dashboard"><i class="fa-solid fa-chart-line"></i> <span>Dashboard</span></li>
+                    <li data-tab="veiculos"><i class="fa-solid fa-truck"></i> <span>Veículos</span></li>
+                    <li data-tab="ocorrencias"><i class="fa-solid fa-triangle-exclamation"></i> <span>Ocorrências</span></li>
+                    <li data-tab="ordens"><i class="fa-solid fa-wrench"></i> <span>Ordens de Serviço</span></li>
+                    <li data-tab="mecanicos"><i class="fa-solid fa-user-gear"></i> <span>Mecânicos</span></li>
+                    <li data-tab="pesquisa"><i class="fa-solid fa-magnifying-glass"></i> <span>Pesquisa Avançada</span></li>
+                    <li data-tab="relatorios"><i class="fa-solid fa-file-contract"></i> <span>Relatórios</span></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <i class="fa-solid fa-circle-user"></i>
+                    <span id="userEmail">Equipe de Logística</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="search-bar-quick">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="quickSearch" placeholder="Busca rápida por placa ou prefixo...">
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openModal('modalOcorrencia')"><i class="fa-solid fa-plus"></i> Nova Ocorrência</button>
+                    <button class="btn btn-secondary" onclick="openModal('modalOS')"><i class="fa-solid fa-wrench"></i> Nova OS</button>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- 1. DASHBOARD -->
+                <section id="tab-dashboard" class="tab-content active">
+                    <div class="page-title">
+                        <h1>Visão Geral da Frota</h1>
+                        <span class="subtitle">Indicadores e gráficos operacionais em tempo real (Firebase)</span>
+                    </div>
+
+                    <!-- Cards -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-icon blue"><i class="fa-solid fa-truck"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Total de Caminhões</span>
+                                <h3 id="kpiTotalVeiculos">0</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon orange"><i class="fa-solid fa-wrench"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Em Manutenção</span>
+                                <h3 id="kpiEmManutencao">0</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon yellow"><i class="fa-solid fa-clock"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Aguardando Reparo</span>
+                                <h3 id="kpiAguardando">0</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon green"><i class="fa-solid fa-circle-check"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Concluídas no Mês</span>
+                                <h3 id="kpiConcluidasMes">0</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Ocorrências Abertas</span>
+                                <h3 id="kpiOcorrenciasAbertas">0</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon purple"><i class="fa-solid fa-rotate-left"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Problemas Recorrentes</span>
+                                <h3 id="kpiRecorrentes">0</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon dark-blue"><i class="fa-solid fa-dollar-sign"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Gasto Total Mês</span>
+                                <h3 id="kpiGastoMes">R$ 0,00</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon emerald"><i class="fa-solid fa-truck-moving"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Liberados Operação</span>
+                                <h3 id="kpiLiberados">0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>Gastos Mensais com Manutenção (R$)</h3>
+                            <canvas id="chartGastos"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Principais Falhas da Frota</h3>
+                            <canvas id="chartCategorias"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Manutenções por Veículo</h3>
+                            <canvas id="chartManutVeiculos"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Serviços por Mecânico</h3>
+                            <canvas id="chartMecanicos"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. CADASTRO DE VEÍCULOS -->
+                <section id="tab-veiculos" class="tab-content">
+                    <div class="page-title flex-between">
+                        <div>
+                            <h1>Gestão da Frota de Caminhões</h1>
+                            <span class="subtitle">Cadastre e gerencie veículos e acesse o histórico individual</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('modalVeiculo')"><i class="fa-solid fa-plus"></i> Novo Caminhão</button>
+                    </div>
+
+                    <div class="table-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Placa</th>
+                                    <th>Prefixo</th>
+                                    <th>Marca / Modelo</th>
+                                    <th>Ano</th>
+                                    <th>KM Atual</th>
+                                    <th>Filial</th>
+                                    <th>Motorista Habitual</th>
+                                    <th>Situação</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblVeiculos">
+                                <!-- Preenchido dinamicamente via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- HISTÓRICO INDIVIDUAL DE VEÍCULO -->
+                <section id="tab-historico-veiculo" class="tab-content">
+                    <button class="btn btn-secondary mb-15" onclick="switchTab('veiculos')"><i class="fa-solid fa-arrow-left"></i> Voltar para Frota</button>
+                    
+                    <div class="vehicle-profile-card" id="veiculoHeaderInfo"></div>
+
+                    <h2 class="section-heading">Linha do Tempo de Manutenções e Ocorrências</h2>
+                    <div class="timeline-container" id="timelineVeiculo"></div>
+                </section>
+
+                <!-- 3. OCORRÊNCIAS -->
+                <section id="tab-ocorrencias" class="tab-content">
+                    <div class="page-title flex-between">
+                        <div>
+                            <h1>Ocorrências Mecânicas</h1>
+                            <span class="subtitle">Registros de falhas identificadas pelos motoristas</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('modalOcorrencia')"><i class="fa-solid fa-plus"></i> Nova Ocorrência</button>
+                    </div>
+
+                    <div class="table-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Nº</th>
+                                    <th>Data/Hora</th>
+                                    <th>Veículo</th>
+                                    <th>Motorista</th>
+                                    <th>Categoria</th>
+                                    <th>Prioridade</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblOcorrencias"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 4. ORDENS DE SERVIÇO -->
+                <section id="tab-ordens" class="tab-content">
+                    <div class="page-title flex-between">
+                        <div>
+                            <h1>Ordens de Serviço e Reparos</h1>
+                            <span class="subtitle">Controle de intervenções técnicas e peças trocadas</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('modalOS')"><i class="fa-solid fa-wrench"></i> Nova Ordem de Serviço</button>
+                    </div>
+
+                    <div class="table-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>OS ID</th>
+                                    <th>Ocorrência</th>
+                                    <th>Veículo</th>
+                                    <th>Data Entrada</th>
+                                    <th>Mecânico / Oficina</th>
+                                    <th>Valor Total</th>
+                                    <th>Garantia</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblOrdens"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 5. MECÂNICOS -->
+                <section id="tab-mecanicos" class="tab-content">
+                    <div class="page-title flex-between">
+                        <div>
+                            <h1>Mecânicos e Prestadores</h1>
+                            <span class="subtitle">Desempenho técnico e histórico de serviços executados</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('modalMecanico')"><i class="fa-solid fa-user-plus"></i> Novo Mecânico</button>
+                    </div>
+
+                    <div class="table-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Nome</th>
+                                    <th>Contato</th>
+                                    <th>Especialidade</th>
+                                    <th>Oficina / Empresa</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblMecanicos"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 6. PESQUISA AVANÇADA -->
+                <section id="tab-pesquisa" class="tab-content">
+                    <div class="page-title">
+                        <h1>Pesquisa Avançada</h1>
+                        <span class="subtitle">Filtre dados por múltiplos parâmetros</span>
+                    </div>
+
+                    <div class="filter-card">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Placa ou Prefixo</label>
+                                <input type="text" id="fPlaca" placeholder="Ex: ABC1D23">
+                            </div>
+                            <div class="form-group">
+                                <label>Mecânico</label>
+                                <select id="fMecanico"><option value="">Todos</option></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria da Falha</label>
+                                <select id="fCategoria">
+                                    <option value="">Todas</option>
+                                    <option value="motor">Motor</option>
+                                    <option value="cambio">Câmbio</option>
+                                    <option value="embreagem">Embreagem</option>
+                                    <option value="freios">Freios</option>
+                                    <option value="suspensao">Suspensão</option>
+                                    <option value="pneus">Pneus</option>
+                                    <option value="eletrico">Elétrico</option>
+                                    <option value="arrefecimento">Arrefecimento</option>
+                                    <option value="combustivel">Combustível</option>
+                                    <option value="direcao">Direção</option>
+                                    <option value="outros">Outros</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex-end mt-15">
+                            <button class="btn btn-secondary mr-10" onclick="limparFiltros()">Limpar</button>
+                            <button class="btn btn-primary" onclick="executarPesquisaAvancada()"><i class="fa-solid fa-magnifying-glass"></i> Pesquisar</button>
+                        </div>
+                    </div>
+
+                    <div class="table-card mt-20">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Veículo</th>
+                                    <th>Tipo Registro</th>
+                                    <th>Detalhes / Descrição</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblPesquisaResultados">
+                                <tr><td colspan="5" class="text-center">Utilize os filtros acima para pesquisar.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 7. RELATÓRIOS -->
+                <section id="tab-relatorios" class="tab-content">
+                    <div class="page-title">
+                        <h1>Relatórios Gerenciais</h1>
+                        <span class="subtitle">Exporte dados operacionais e de custos</span>
+                    </div>
+
+                    <div class="reports-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px;">
+                        <div class="chart-card">
+                            <h3>Custos de Manutenção por Veículo</h3>
+                            <p style="font-size:0.85rem; color:var(--text-muted); margin: 10px 0;">Detalhamento de gastos acumulados por caminhão.</p>
+                            <button class="btn btn-secondary mt-10" onclick="gerarRelatorioCustos()"><i class="fa-solid fa-download"></i> Exportar CSV</button>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Veículos com Retornos Recorrentes</h3>
+                            <p style="font-size:0.85rem; color:var(--text-muted); margin: 10px 0;">Lista de caminhões com falhas repetidas.</p>
+                            <button class="btn btn-secondary mt-10" onclick="gerarRelatorioRecorrencias()"><i class="fa-solid fa-download"></i> Exportar CSV</button>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Produtividade de Mecânicos</h3>
+                            <p style="font-size:0.85rem; color:var(--text-muted); margin: 10px 0;">Serviços e total faturado por profissional.</p>
+                            <button class="btn btn-secondary mt-10" onclick="gerarRelatorioMecanicos()"><i class="fa-solid fa-download"></i> Exportar CSV</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAIS DO SISTEMA -->
+    <!-- Modal Cadastro de Veículo -->
+    <div class="modal" id="modalVeiculo">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2>Cadastro de Caminhão</h2>
+                <span class="close-modal" onclick="closeModal('modalVeiculo')">&times;</span>
+            </div>
+            <form id="formVeiculo" onsubmit="salvarVeiculo(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Placa *</label>
+                        <input type="text" id="vPlaca" required placeholder="ABC-1234">
+                    </div>
+                    <div class="form-group">
+                        <label>Prefixo / Nº Interno *</label>
+                        <input type="text" id="vPrefixo" required placeholder="CAM-01">
+                    </div>
+                    <div class="form-group">
+                        <label>Marca *</label>
+                        <input type="text" id="vMarca" required placeholder="Volvo, Scania">
+                    </div>
+                    <div class="form-group">
+                        <label>Modelo *</label>
+                        <input type="text" id="vModelo" required placeholder="FH 540">
+                    </div>
+                    <div class="form-group">
+                        <label>Ano Fabricação *</label>
+                        <input type="number" id="vAno" required value="2022">
+                    </div>
+                    <div class="form-group">
+                        <label>Quilometragem Atual *</label>
+                        <input type="number" id="vKm" required placeholder="150000">
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Veículo *</label>
+                        <select id="vTipo" required>
+                            <option value="Toco">Toco</option>
+                            <option value="Truck">Truck</option>
+                            <option value="Cavalo Mecânico">Cavalo Mecânico</option>
+                            <option value="Bitrem">Bitrem</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Unidade / Filial *</label>
+                        <input type="text" id="vUnidade" required placeholder="Matriz SP">
+                    </div>
+                    <div class="form-group">
+                        <label>Motorista Habitual</label>
+                        <input type="text" id="vMotorista">
+                    </div>
+                    <div class="form-group">
+                        <label>Situação *</label>
+                        <select id="vSituacao" required>
+                            <option value="disponivel">Disponível</option>
+                            <option value="em_manutencao">Em Manutenção</option>
+                            <option value="parado">Parado</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Observações</label>
+                        <textarea id="vObservacoes" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modalVeiculo')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Caminhão</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Cadastro de Ocorrência -->
+    <div class="modal" id="modalOcorrencia">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2>Registrar Ocorrência Mecânica</h2>
+                <span class="close-modal" onclick="closeModal('modalOcorrencia')">&times;</span>
+            </div>
+            <form id="formOcorrencia" onsubmit="salvarOcorrencia(event)">
+                <div id="alertaRecorrencia" class="alert-box alert-warning hidden">
+                    <div class="alert-title"><i class="fa-solid fa-triangle-exclamation"></i> ATENÇÃO: POSSÍVEL PROBLEMA RECORRENTE!</div>
+                    <div id="alertaRecorrenciaConteudo" class="alert-body"></div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Caminhão / Veículo *</label>
+                        <select id="oVeiculoId" required onchange="verificarRecorrenciaEmTempoReal()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Motorista Identificador *</label>
+                        <input type="text" id="oMotorista" required placeholder="Nome do motorista">
+                    </div>
+                    <div class="form-group">
+                        <label>KM no Momento do Problema *</label>
+                        <input type="number" id="oKm" required placeholder="KM do painel">
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria da Falha *</label>
+                        <select id="oCategoria" required onchange="verificarRecorrenciaEmTempoReal()">
+                            <option value="motor">Motor</option>
+                            <option value="cambio">Câmbio</option>
+                            <option value="embreagem">Embreagem</option>
+                            <option value="freios">Freios</option>
+                            <option value="suspensao">Suspensão</option>
+                            <option value="pneus">Pneus</option>
+                            <option value="eletrico">Sistema Elétrico</option>
+                            <option value="arrefecimento">Arrefecimento</option>
+                            <option value="combustivel">Combustível</option>
+                            <option value="direcao">Direção</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Prioridade *</label>
+                        <select id="oPrioridade" required>
+                            <option value="baixa">Baixa</option>
+                            <option value="media" selected>Média</option>
+                            <option value="alta">Alta</option>
+                            <option value="critica">Crítica</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Local da Identificação</label>
+                        <input type="text" id="oLocal" placeholder="Ex: Rodovia Dutra Km 120">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Descrição Detalhada do Problema *</label>
+                        <textarea id="oDescricao" rows="2" required placeholder="Relato técnico do problema" onblur="verificarRecorrenciaEmTempoReal()"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Sintomas Apresentados</label>
+                        <input type="text" id="oSintomas" placeholder="Ex: Barulho ao trocar marcha">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modalOcorrencia')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Registrar Ocorrência</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Ordem de Serviço -->
+    <div class="modal" id="modalOS">
+        <div class="modal-content modal-xl">
+            <div class="modal-header">
+                <h2>Registro de Ordem de Serviço / Conserto</h2>
+                <span class="close-modal" onclick="closeModal('modalOS')">&times;</span>
+            </div>
+            <form id="formOS" onsubmit="salvarOS(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Ocorrência Relacionada</label>
+                        <select id="osOcorrenciaId"><option value="">Sem Ocorrência Direta</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Veículo *</label>
+                        <select id="osVeiculoId" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Mecânico Responsável *</label>
+                        <select id="osMecanicoId" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Oficina Terceirizada</label>
+                        <input type="text" id="osOficinaTerceira" placeholder="Nome da Oficina Externa">
+                    </div>
+                    <div class="form-group">
+                        <label>Data Entrada na Oficina *</label>
+                        <input type="date" id="osDataEntrada" required>
+                    </div>
+                    <div class="form-group">
+                        <label>KM Atual do Veículo *</label>
+                        <input type="number" id="osKmReparo" required placeholder="KM no conserto">
+                    </div>
+                    <div class="form-group">
+                        <label>Responsável Aprovação *</label>
+                        <input type="text" id="osResponsavelAprovacao" required placeholder="Nome do gestor">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Diagnóstico Técnico *</label>
+                        <textarea id="osDiagnostico" rows="2" required placeholder="Avaliação técnica realizada"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Serviços Executados e Peças *</label>
+                        <textarea id="osDescricaoReparo" rows="2" required placeholder="Detalhamento do conserto"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Custo Mão de Obra (R$)</label>
+                        <input type="number" step="0.01" id="osValorMaoObra" value="0.00" onchange="calcularTotalOS()">
+                    </div>
+                    <div class="form-group">
+                        <label>Custo Peças (R$)</label>
+                        <input type="number" step="0.01" id="osValorPecas" value="0.00" onchange="calcularTotalOS()">
+                    </div>
+                    <div class="form-group">
+                        <label>Outros Custos (R$)</label>
+                        <input type="number" step="0.01" id="osOutrosCustos" value="0.00" onchange="calcularTotalOS()">
+                    </div>
+                    <div class="form-group">
+                        <label>Valor Total (R$)</label>
+                        <input type="number" step="0.01" id="osValorTotal" value="0.00" readonly class="input-readonly">
+                    </div>
+                    <div class="form-group">
+                        <label>Garantia (Dias)</label>
+                        <input type="number" id="osGarantiaDias" value="90">
+                    </div>
+                    <div class="form-group">
+                        <label>Garantia (KM)</label>
+                        <input type="number" id="osGarantiaKm" value="10000">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modalOS')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Finalizar e Registrar OS</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Cadastro de Mecânico -->
+    <div class="modal" id="modalMecanico">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cadastrar Mecânico</h2>
+                <span class="close-modal" onclick="closeModal('modalMecanico')">&times;</span>
+            </div>
+            <form id="formMecanico" onsubmit="salvarMecanico(event)">
+                <div class="form-group mb-10">
+                    <label>Código *</label>
+                    <input type="text" id="mCodigo" required placeholder="MEC-01">
+                </div>
+                <div class="form-group mb-10">
+                    <label>Nome Completo *</label>
+                    <input type="text" id="mNome" required>
+                </div>
+                <div class="form-group mb-10">
+                    <label>Telefone</label>
+                    <input type="text" id="mTelefone">
+                </div>
+                <div class="form-group mb-10">
+                    <label>Especialidade *</label>
+                    <select id="mEspecialidade" required>
+                        <option value="Diesel / Motor">Diesel / Motor</option>
+                        <option value="Elétrica">Elétrica</option>
+                        <option value="Suspensão / Freios">Suspensão / Freios</option>
+                        <option value="Câmbio">Câmbio</option>
+                        <option value="Geral">Geral</option>
+                    </select>
+                </div>
+                <div class="form-group mb-10">
+                    <label>Oficina / Empresa *</label>
+                    <input type="text" id="mEmpresa" value="Oficina Interna" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modalMecanico')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Mecânico</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Principal com Conexão Firebase Firestore -->
+    <script src="script.js"></script>
+</body>
+</html>
