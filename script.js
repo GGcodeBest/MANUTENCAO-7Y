@@ -18,9 +18,9 @@ const firebaseConfig = {
     measurementId: "G-VL95LRQ9BY"
 };
 
-// Inicializar Firebase
+// Inicializar Firebase e Firestore explicitamente com o banco padrão
 const app = initializeApp(firebaseConfig);
-const dbFirestore = getFirestore(app);
+const dbFirestore = getFirestore(app, "(default)");
 
 // Estado da Aplicação Local (Cache)
 let db = {
