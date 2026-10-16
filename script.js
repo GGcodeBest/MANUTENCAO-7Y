@@ -3,11 +3,11 @@
    Módulo JavaScript Principal - Integração com Firebase Firestore (manutencaogy)
    ========================================================================== */
 
-// Importação dos módulos do Firebase via CDN (sem precisar de npm install)
+// Importação dos módulos do Firebase via CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Configuração do Firebase fornecida pelo projeto "manutencaogy"[cite: 5]
+// Configuração do Firebase fornecida pelo projeto "manutencaogy"
 const firebaseConfig = {
     apiKey: "AIzaSyDRY3Ka0m1RwphVG_5FUnonfukskw8TMkw",
     authDomain: "manutencaogy.firebaseapp.com",
@@ -50,20 +50,26 @@ function initNavigation() {
         });
     });
 
-    document.getElementById('toggleSidebar').addEventListener('click', () => {
-        document.getElementById('sidebar').classList.toggle('collapsed');
-    });
+    const toggleBtn = document.getElementById('toggleSidebar');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        });
+    }
 
-    document.getElementById('quickSearch').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            const term = e.target.value.trim().toLowerCase();
-            if (term) {
-                switchTab('pesquisa');
-                document.getElementById('fPlaca').value = term;
-                executarPesquisaAvancada();
+    const quickSearch = document.getElementById('quickSearch');
+    if (quickSearch) {
+        quickSearch.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const term = e.target.value.trim().toLowerCase();
+                if (term) {
+                    switchTab('pesquisa');
+                    document.getElementById('fPlaca').value = term;
+                    executarPesquisaAvancada();
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 function switchTab(tabId) {
@@ -79,15 +85,21 @@ function switchTab(tabId) {
     if (tabId === 'dashboard') atualizarDashboard();
 }
 
+// Expondo funções globais para o HTML conseguir enxergar
+window.switchTab = switchTab;
+
 window.openModal = function(modalId) {
     preencherSelectsFormularios();
-    document.getElementById(modalId).style.display = 'flex';
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'flex';
 };
 
 window.closeModal = function(modalId) {
-    document.getElementById(modalId).style.display = 'none';
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
     if(modalId === 'modalOcorrencia') {
-        document.getElementById('alertaRecorrencia').classList.add('hidden');
+        const alerta = document.getElementById('alertaRecorrencia');
+        if (alerta) alerta.classList.add('hidden');
     }
 };
 
@@ -128,6 +140,7 @@ function renderizarTabelas() {
 
 function renderTabelaVeiculos() {
     const tbody = document.getElementById('tblVeiculos');
+    if (!tbody) return;
     tbody.innerHTML = db.veiculos.map(v => `
         <tr>
             <td><strong>${v.placa || ''}</strong></td>
@@ -147,6 +160,7 @@ function renderTabelaVeiculos() {
 
 function renderTabelaOcorrencias() {
     const tbody = document.getElementById('tblOcorrencias');
+    if (!tbody) return;
     tbody.innerHTML = db.ocorrencias.map((o, idx) => {
         const v = db.veiculos.find(x => x.id === o.veiculo_id);
         return `
@@ -168,6 +182,7 @@ function renderTabelaOcorrencias() {
 
 function renderTabelaOrdens() {
     const tbody = document.getElementById('tblOrdens');
+    if (!tbody) return;
     tbody.innerHTML = db.ordens.map(os => {
         const v = db.veiculos.find(x => x.id === os.veiculo_id);
         const m = db.mecanicos.find(x => x.id === os.mecanico_id);
@@ -189,6 +204,7 @@ function renderTabelaOrdens() {
 
 function renderTabelaMecanicos() {
     const tbody = document.getElementById('tblMecanicos');
+    if (!tbody) return;
     tbody.innerHTML = db.mecanicos.map(m => `
         <tr>
             <td>${m.codigo || ''}</td>
@@ -209,7 +225,7 @@ function getBadgeSituacao(situacao) {
 }
 
 /* --------------------------------------------------------------------------
-   4. SALVAMENTO NO FIRESTORE
+   4. SALVAMENTO NO FIRESTORE (FUNÇÕES EXPOSTAS GLOBALMENTE)
    -------------------------------------------------------------------------- */
 window.salvarVeiculo = async function(e) {
     e.preventDefault();
@@ -285,7 +301,7 @@ window.salvarMecanico = async function(e) {
 
     closeModal('modalMecanico');
     renderTabelaMecanicos();
-    alert('Mecânico cadastrado no Firebase!');
+    alert('Mecânico cadastrado no Firebase com sucesso!');
 };
 
 window.calcularTotalOS = function() {
@@ -333,36 +349,52 @@ window.salvarOS = async function(e) {
     renderTabelaOrdens();
     renderTabelaVeiculos();
     atualizarDashboard();
-    alert('Ordem de Serviço salva no Firebase!');
+    alert('Ordem de Serviço salva no Firebase com sucesso!');
 };
 
 /* --------------------------------------------------------------------------
    5. DASHBOARD E GRÁFICOS
    -------------------------------------------------------------------------- */
 function atualizarDashboard() {
-    document.getElementById('kpiTotalVeiculos').innerText = db.veiculos.length;
-    document.getElementById('kpiEmManutencao').innerText = db.veiculos.filter(v => v.situacao === 'em_manutencao').length;
-    document.getElementById('kpiAguardando').innerText = db.ocorrencias.filter(o => o.status === 'aberta').length;
-    document.getElementById('kpiConcluidasMes').innerText = db.ordens.length;
-    document.getElementById('kpiOcorrenciasAbertas').innerText = db.ocorrencias.filter(o => o.status !== 'concluida').length;
-    document.getElementById('kpiLiberados').innerText = db.veiculos.filter(v => v.situacao === 'disponivel').length;
+    const totalV = document.getElementById('kpiTotalVeiculos');
+    if (totalV) totalV.innerText = db.veiculos.length;
+
+    const emManut = document.getElementById('kpiEmManutencao');
+    if (emManut) emManut.innerText = db.veiculos.filter(v => v.situacao === 'em_manutencao').length;
+
+    const aguard = document.getElementById('kpiAguardando');
+    if (aguard) aguard.innerText = db.ocorrencias.filter(o => o.status === 'aberta').length;
+
+    const concl = document.getElementById('kpiConcluidasMes');
+    if (concl) concl.innerText = db.ordens.length;
+
+    const ocAbertas = document.getElementById('kpiOcorrenciasAbertas');
+    if (ocAbertas) ocAbertas.innerText = db.ocorrencias.filter(o => o.status !== 'concluida').length;
+
+    const liberados = document.getElementById('kpiLiberados');
+    if (liberados) liberados.innerText = db.veiculos.filter(v => v.situacao === 'disponivel').length;
 
     const gastoTotal = db.ordens.reduce((acc, os) => acc + parseFloat(os.valor_total || 0), 0);
-    document.getElementById('kpiGastoMes').innerText = `R$ ${gastoTotal.toFixed(2)}`;
+    const kpiGasto = document.getElementById('kpiGastoMes');
+    if (kpiGasto) kpiGasto.innerText = `R$ ${gastoTotal.toFixed(2)}`;
 }
 
 function initChartJS() {
-    const ctxGastos = document.getElementById('chartGastos').getContext('2d');
-    chartGastos = new Chart(ctxGastos, {
-        type: 'bar',
-        data: { labels: ['Jul', 'Ago', 'Set', 'Out'], datasets: [{ label: 'Gastos (R$)', data: [12000, 15000, 8000, 18500], backgroundColor: '#0f172a' }] }
-    });
+    const ctxGastos = document.getElementById('chartGastos');
+    if (ctxGastos) {
+        chartGastos = new Chart(ctxGastos.getContext('2d'), {
+            type: 'bar',
+            data: { labels: ['Jul', 'Ago', 'Set', 'Out'], datasets: [{ label: 'Gastos (R$)', data: [12000, 15000, 8000, 18500], backgroundColor: '#0f172a' }] }
+        });
+    }
 
-    const ctxCat = document.getElementById('chartCategorias').getContext('2d');
-    chartCategorias = new Chart(ctxCat, {
-        type: 'pie',
-        data: { labels: ['Motor', 'Freios', 'Elétrico', 'Câmbio'], datasets: [{ data: [40, 25, 20, 15], backgroundColor: ['#ef4444', '#f97316', '#3b82f6', '#10b981'] }] }
-    });
+    const ctxCat = document.getElementById('chartCategorias');
+    if (ctxCat) {
+        chartCategorias = new Chart(ctxCat.getContext('2d'), {
+            type: 'pie',
+            data: { labels: ['Motor', 'Freios', 'Elétrico', 'Câmbio'], datasets: [{ data: [40, 25, 20, 15], backgroundColor: ['#ef4444', '#f97316', '#3b82f6', '#10b981'] }] }
+        });
+    }
 }
 
 function preencherSelectsFormularios() {
@@ -373,6 +405,6 @@ function preencherSelectsFormularios() {
     const selMec = `<option value="">Selecione o Mecânico</option>` + db.mecanicos.map(m => `<option value="${m.id}">${m.nome} (${m.empresa_oficina})</option>`).join('');
     if(document.getElementById('osMecanicoId')) document.getElementById('osMecanicoId').innerHTML = selMec;
 
-    const selOc = `<option value="">Selecione a Ocorrência</option>` + db.ocorrencias.map(o => `<option value="${o.id}">${o.categoria.toUpperCase()}</option>`).join('');
+    const selOc = `<option value="">Selecione a Ocorrência</option>` + db.ocorrencias.map(o => `<option value="${o.id}">${(o.categoria || '').toUpperCase()}</option>`).join('');
     if(document.getElementById('osOcorrenciaId')) document.getElementById('osOcorrenciaId').innerHTML = selOc;
 }
